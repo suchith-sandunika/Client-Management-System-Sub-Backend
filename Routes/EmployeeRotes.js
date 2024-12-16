@@ -27,6 +27,7 @@ router.get('/ViewAllAttendances', (req, res) => {
                     DATE(attendance.date) AS date,
                         CASE
                             WHEN HOUR(attendance.date) BETWEEN 8 AND 9 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Attended'
+                            WHEN HPUR(attendance.date) BETWEEN 9 AND 5 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Late Attended'
                             ELSE 'Not Attended'
                         END AS status
                     FROM 
