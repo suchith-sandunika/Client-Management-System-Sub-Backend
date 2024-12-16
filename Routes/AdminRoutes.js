@@ -34,30 +34,14 @@ router.get('/ViewAllAttendances', (req, res) => {
 });
 
 // Route to search the attendance ...
-router.get('/attendance/:input', (req, res) => {
+router.get('/attendance/:date', (req, res) => {
     try {
-        const input = req.params.input;
-        const sql = `SELECT 
-                                LPAD(ROW_NUMBER() OVER (ORDER BY employee.EmployeeID), 2, '0') AS RowNumber,
-                                employee.EmployeeID,
-                                employee.name, 
-                                employee.email, 
-                                DATE(attendance.date) AS date,
-                                CASE
-                                    WHEN HOUR(attendance.date) BETWEEN 8 AND 9 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Attended'
-                                    ELSE 'Not Attended'
-                                END AS status
-                            FROM 
-                                attendance 
-                            INNER JOIN 
-                                employee 
-                            ON 
-                                attendance.EmployeeID = employee.EmployeeID 
-                            WHERE 
-                                (employee.name LIKE CONCAT(?, '%')  -- Matches names starting with the entered text
-                                OR employee.email LIKE CONCAT(?, '%')  -- Matches emails starting with the entered text
-                                OR DATE(attendance.date) LIKE CONCAT(?, '%'))  -- Matches dates starting with the entered text`;
-        con.query(sql, [input], (err, data) => {
+        const date = req.params.date;
+        const sql = `SELECT * FROM attendance 
+                    INNER JOIN employee 
+                    ON attendance.EmployeeID = employee.EmployeeID 
+                    WHERE DATE(attendance.date) = ?`;
+        con.query(sql, [date], (err, data) => {
             if(err) return res.json(err);
             return res.json(data);
         });
@@ -78,7 +62,7 @@ router.get('/sortAttendance/:date', (req, res) => {
         const sql2 = `SELECT attendance.*, employee.*
             FROM attendance 
             INNER JOIN employee ON attendance.EmployeeID = employee.EmployeeID
-            WHERE DATE(attendance.Date) != ?
+            WHERE DATE(attendance.Date) != ? 
             ORDER BY 3 DESC`;
 
         con.query(sql1, [date], (err, data1) => {
@@ -194,6 +178,8 @@ router.get('/generatePDF', (req, res) => {
                 });
             } 
             
+           
+
             // Finalize the document and send response ...
             doc.end();
             stream.on('finish', () => {
