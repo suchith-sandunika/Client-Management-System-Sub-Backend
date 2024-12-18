@@ -20,14 +20,14 @@ router.get('/ViewAllAttendances', (req, res) => {
     try {
         // const sql = `SELECT * FROM attendance INNER JOIN employee ON attendance.EmployeeID = employee.EmployeeID`;
         const sql = `SELECT 
-                    LPAD(ROW_NUMBER() OVER (ORDER BY employee.EmployeeID), 2, '0') AS RowNumber,
-                    employee.EmployeeID,
-                    employee.name, 
-                    employee.email, 
-                    DATE(attendance.date) AS date,
+                        LPAD(ROW_NUMBER() OVER (ORDER BY employee.EmployeeID), 2, '0') AS RowNumber,
+                        employee.EmployeeID,
+                        employee.name, 
+                        employee.email, 
+                        DATE(attendance.date) AS date,
                         CASE
                             WHEN HOUR(attendance.date) BETWEEN 8 AND 9 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Attended'
-                            WHEN HPUR(attendance.date) BETWEEN 9 AND 5 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Late Attended'
+                            WHEN HOUR(attendance.date) BETWEEN 9 AND 17 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Late Attended'
                             ELSE 'Not Attended'
                         END AS status
                     FROM 
