@@ -1,6 +1,7 @@
 import express from "express";
 import con from "../utils/db.js";
 const router = express.Router(); 
+import { isDDMMYYYYWithDash, isYYYYMMDD } from "../utils/formatDate.js";
 
 // Route to view all employees ...
 router.get('/ViewAllEmployees', (req, res) => {
@@ -69,10 +70,28 @@ router.get('/attendance/:input', (req, res) => {
                                 (employee.name LIKE CONCAT(?, '%')  -- Matches names starting with the entered text
                                 OR employee.email LIKE CONCAT(?, '%')  -- Matches emails starting with the entered text
                                 OR DATE(attendance.date) LIKE CONCAT(?, '%'))  -- Matches dates starting with the entered text`;
-        con.query(sql, [input, input, input], (err, data) => {
-            if(err) return res.json(err);
-            return res.json(data);
-        });
+
+        if (isDDMMYYYYWithDash(input)) {
+            // Convert from DD-MM-YYYY to YYYY-MM-DD ...
+            const [day, month, year] = input.split('-');
+            const formattedDate = `${year}-${month}-${day}`;
+            con.query(sql, [formattedDate, formattedDate, formattedDate], (err, data) => {
+                if (err) return res.json(err);
+                return res.json(data);
+            });
+        } else if (isYYYYMMDD(input)) {
+            // Input is already in YYYY-MM-DD ...
+            con.query(sql, [input, input, input], (err, data) => {
+                if (err) return res.json(err);
+                return res.json(data);
+            });
+        } else {
+            // If the input is not a date ...
+            con.query(sql, [input, input, input], (err, data) => {
+                if(err) return res.json(err);
+                return res.json(data);
+            });
+        }
     } catch(error) {
         console.log(error);
     }

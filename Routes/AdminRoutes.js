@@ -1,7 +1,7 @@
 import express from "express";
 import PDFDocument from 'pdfkit';
 import con from "../utils/db.js";
-import formatDateToDMY from "../utils/formatDate.js";
+import { formatDateToDMY } from "../utils/formatDate.js";
 import fs from 'fs';
 const router = express.Router(); 
 
