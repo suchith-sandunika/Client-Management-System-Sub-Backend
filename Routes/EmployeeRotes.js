@@ -21,7 +21,7 @@ router.get('/ViewAllAttendances', (req, res) => {
     try {
         // const sql = `SELECT * FROM attendance INNER JOIN employee ON attendance.EmployeeID = employee.EmployeeID`;
         const sql = `SELECT 
-                        LPAD(ROW_NUMBER() OVER (ORDER BY employee.EmployeeID), 2, '0') AS RowNumber,
+                        ROW_NUMBER() OVER (ORDER BY employee.EmployeeID) AS RowNumber,
                         employee.EmployeeID,
                         employee.name, 
                         employee.email, 
