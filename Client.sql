@@ -14,7 +14,7 @@ CREATE TABLE Employee (
 CREATE TABLE Attendance (
     AttendanceID INT AUTO_INCREMENT PRIMARY KEY,
     EmployeeID INT NOT NULL,
-    Date DATE NOT NULL,
+    Date DATETIME NOT NULL,
     FOREIGN KEY (EmployeeID) REFERENCES Employee(EmployeeID)
         ON DELETE CASCADE
         ON UPDATE CASCADE
