@@ -26,6 +26,8 @@ router.get('/ViewAllAttendances', (req, res) => {
                         employee.name, 
                         employee.email, 
                         DATE(attendance.date) AS date,
+                        HOUR(attendance.date) AS hour,
+                        MINUTE(attendance.date) AS minute,
                         CASE
                             WHEN HOUR(attendance.date) BETWEEN 8 AND 9 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Attended'
                             WHEN HOUR(attendance.date) BETWEEN 9 AND 17 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Late Attended'
@@ -101,14 +103,22 @@ router.get('/attendance/:input', (req, res) => {
 router.post('/addAttendance', (req, res) => {
     try {
         const { name, date, email } = req.body;
+
         const current_date = new Date();
         const hour = current_date.getHours();
         const minute = current_date.getMinutes();
-        console.log(name, date, email, hour, minute);
+        const second = current_date.getSeconds();
+
+        // Concatenate the `date` with the current time in HH:mm:ss format...
+        // The easiest way to do this is add current_date as date parameter ... But for the sake of all conditions .. i did it in this way ...
+        const fullDateTime = `${date} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`;
+        console.log(name, date, email, hour, minute, second, fullDateTime);
+
         // check whether the user is already existing ...
         const sql1 = `SELECT EmployeeID FROM employee WHERE Name = ? AND Email = ?`;
         con.query(sql1, [name, email], (err, result) => {
             if(err) return res.json(err);
+            // Check result length ...
             if(result.length === 0) {
                 return res.json({ message: "Employee not found!"});
             }
@@ -117,14 +127,16 @@ router.post('/addAttendance', (req, res) => {
             console.log(result[0].EmployeeID);
             const EmployeeId = result[0].EmployeeID;
             console.log("EmployeeId : ", EmployeeId);
-            if(hour > 8 && hour < 17 && minute > 0 && minute < 60) {
+            if(hour >= 8 && hour < 17 && minute > 0 && minute < 60) {
+                // Postman default time zone setting ... Coordinated Universal Time (UTC) ...
+                // Like ... 2024-12-18T18:30:00.000Z in UTC translates to 2024-12-19 00:00:00 in IST ...
                 const sql2 = `INSERT INTO attendance (EmployeeId, date) VALUES (${EmployeeId}, '${date}')`;
-                con.query(sql2, [EmployeeId, date], (err, data) => {
+                con.query(sql2, [EmployeeId, fullDateTime], (err, data) => {
                     if(err) return res.json(err);
                     return res.json({ message: "Attendance added successfully!", data: data });
                 });
             } else {
-                return res.json({ message: "Attendance can only be added between 8:00 AM and 5:00 PM, The working hours!"});
+                return res.json({ message: "Attendance can only be added between 8:00 AM and 5:00 PM, The working hours!", data: [date, hour, minute]});
             }
         });
     } catch(error) {
