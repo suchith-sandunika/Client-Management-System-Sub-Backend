@@ -44,6 +44,20 @@ router.get('/ViewAllAttendances', (req, res) => {
     } catch (err) {
         console.log(err);
     }
+}); 
+
+// Route to get employee information trough input ...
+router.get('/viewEmployees/:input', (req, res) => {
+    try {
+        const input = req.params.input;
+        const sql = `SELECT * FROM employee WHERE name = ? OR email = ?`;
+        con.query(sql, [input, input], (err, data) => {
+            if(err) return res.json(err);
+            return res.json(data);
+        });
+    } catch (error) {
+        console.log(error);
+    }
 });
 
 // Route to search the attendance ...
