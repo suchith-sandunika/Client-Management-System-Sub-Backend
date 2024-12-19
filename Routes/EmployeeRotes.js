@@ -65,7 +65,7 @@ router.get('/attendance/:input', (req, res) => {
     try {
         const input = req.params.input;
         const sql = `SELECT 
-                        LPAD(ROW_NUMBER() OVER (ORDER BY employee.EmployeeID), 2, '0') AS RowNumber,
+                        ROW_NUMBER() OVER (ORDER BY employee.EmployeeID) AS RowNumber,
                         employee.EmployeeID,
                         employee.name, 
                         employee.email, 
