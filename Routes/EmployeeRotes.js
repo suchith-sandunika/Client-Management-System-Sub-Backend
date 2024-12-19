@@ -8,7 +8,7 @@ router.get('/ViewAllEmployees', (req, res) => {
     try {
         const sql = `SELECT * FROM employee`;
         con.query(sql, (err, data) => {
-        if(err) return res.json(err);
+            if(err) return res.json(err);
             return res.json(data);
         });
     } catch(error) {
@@ -19,18 +19,16 @@ router.get('/ViewAllEmployees', (req, res) => {
 // Route to view all attendances ...
 router.get('/ViewAllAttendances', (req, res) => {
     try {
-        // const sql = `SELECT * FROM attendance INNER JOIN employee ON attendance.EmployeeID = employee.EmployeeID`;
         const sql = `SELECT 
                         LPAD(ROW_NUMBER() OVER (ORDER BY employee.EmployeeID), 2, '0') AS RowNumber,
                         employee.EmployeeID,
                         employee.name, 
                         employee.email, 
                         DATE(attendance.date) AS date,
-                        HOUR(attendance.date) AS hour,
-                        MINUTE(attendance.date) AS minute,
+                        TIME(attendance.date) AS time, -- Updated to show proper time field
                         CASE
                             WHEN HOUR(attendance.date) BETWEEN 8 AND 9 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Attended'
-                            WHEN HOUR(attendance.date) BETWEEN 9 AND 17 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Late Attended'
+                            WHEN HOUR(attendance.date) BETWEEN 9 AND 17 THEN 'Late Attended'
                             ELSE 'Not Attended'
                         END AS status
                     FROM 
@@ -40,7 +38,7 @@ router.get('/ViewAllAttendances', (req, res) => {
                     ON 
                         attendance.EmployeeID = employee.EmployeeID`;
         con.query(sql, (err, data) => {
-        if(err) return res.json(err);
+            if(err) return res.json(err);
             return res.json(data);
         });
     } catch (err) {
@@ -53,28 +51,28 @@ router.get('/attendance/:input', (req, res) => {
     try {
         const input = req.params.input;
         const sql = `SELECT 
-                                LPAD(ROW_NUMBER() OVER (ORDER BY employee.EmployeeID), 2, '0') AS RowNumber,
-                                employee.EmployeeID,
-                                employee.name, 
-                                employee.email, 
-                                DATE(attendance.date) AS date,
-                                CASE
-                                    WHEN HOUR(attendance.date) BETWEEN 8 AND 9 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Attended'
-                                    ELSE 'Not Attended'
-                                END AS status
-                            FROM 
-                                attendance 
-                            INNER JOIN 
-                                employee 
-                            ON 
-                                attendance.EmployeeID = employee.EmployeeID 
-                            WHERE 
-                                (employee.name LIKE CONCAT(?, '%')  -- Matches names starting with the entered text
-                                OR employee.email LIKE CONCAT(?, '%')  -- Matches emails starting with the entered text
-                                OR DATE(attendance.date) LIKE CONCAT(?, '%'))  -- Matches dates starting with the entered text`;
+                        LPAD(ROW_NUMBER() OVER (ORDER BY employee.EmployeeID), 2, '0') AS RowNumber,
+                        employee.EmployeeID,
+                        employee.name, 
+                        employee.email, 
+                        DATE(attendance.date) AS date,
+                        TIME(attendance.date) AS time, -- Added proper time display
+                        CASE
+                            WHEN HOUR(attendance.date) BETWEEN 8 AND 9 AND MINUTE(attendance.date) BETWEEN 0 AND 59 THEN 'Attended'
+                            ELSE 'Not Attended'
+                        END AS status
+                    FROM 
+                        attendance 
+                    INNER JOIN 
+                        employee 
+                    ON 
+                        attendance.EmployeeID = employee.EmployeeID 
+                    WHERE 
+                        (employee.name LIKE CONCAT(?, '%')  -- Matches names starting with the entered text
+                        OR employee.email LIKE CONCAT(?, '%')  -- Matches emails starting with the entered text
+                        OR DATE(attendance.date) LIKE CONCAT(?, '%'))  -- Matches dates starting with the entered text`;
 
         if (isDDMMYYYYWithDash(input)) {
-            // Convert from DD-MM-YYYY to YYYY-MM-DD ...
             const [day, month, year] = input.split('-');
             const formattedDate = `${year}-${month}-${day}`;
             con.query(sql, [formattedDate, formattedDate, formattedDate], (err, data) => {
@@ -82,13 +80,11 @@ router.get('/attendance/:input', (req, res) => {
                 return res.json(data);
             });
         } else if (isYYYYMMDD(input)) {
-            // Input is already in YYYY-MM-DD ...
             con.query(sql, [input, input, input], (err, data) => {
                 if (err) return res.json(err);
                 return res.json(data);
             });
         } else {
-            // If the input is not a date ...
             con.query(sql, [input, input, input], (err, data) => {
                 if(err) return res.json(err);
                 return res.json(data);
@@ -109,8 +105,7 @@ router.post('/addAttendance', (req, res) => {
         const minute = current_date.getMinutes();
         const second = current_date.getSeconds();
 
-        // Concatenate the `date` with the current time in HH:mm:ss format...
-        // The easiest way to do this is add current_date as date parameter ... But for the sake of all conditions .. i did it in this way ...
+        // Concatenate the `date` with the current time in HH:mm:ss format ...
         const fullDateTime = `${date} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`;
         console.log(name, date, email, hour, minute, second, fullDateTime);
 
@@ -127,16 +122,15 @@ router.post('/addAttendance', (req, res) => {
             console.log(result[0].EmployeeID);
             const EmployeeId = result[0].EmployeeID;
             console.log("EmployeeId : ", EmployeeId);
-            if(hour >= 8 && hour < 17 && minute > 0 && minute < 60) {
-                // Postman default time zone setting ... Coordinated Universal Time (UTC) ...
-                // Like ... 2024-12-18T18:30:00.000Z in UTC translates to 2024-12-19 00:00:00 in IST ...
-                const sql2 = `INSERT INTO attendance (EmployeeId, date) VALUES (${EmployeeId}, '${date}')`;
+            if(hour >= 8 && hour < 17) {
+                // Validate working hours properly
+                const sql2 = `INSERT INTO attendance (EmployeeId, date) VALUES (?, ?)`;
                 con.query(sql2, [EmployeeId, fullDateTime], (err, data) => {
                     if(err) return res.json(err);
                     return res.json({ message: "Attendance added successfully!", data: data });
                 });
             } else {
-                return res.json({ message: "Attendance can only be added between 8:00 AM and 5:00 PM, The working hours!", data: [date, hour, minute]});
+                return res.json({ message: "Attendance can only be added between 8:00 AM and 5:00 PM, The working hours!", data: [date, hour, minute] });
             }
         });
     } catch(error) {
