@@ -194,6 +194,106 @@ router.get('/generatePDF', (req, res) => {
     } catch (error) {
         res.status(500).send({ message: error });
     }
+}); 
+
+// Route to get all the employees ...
+router.get("/employees", (req, res) => {
+    const sql = "SELECT * FROM employee";
+    con.query(sql, (err, data) => {
+        if (err) {
+            console.error("Error executing query:", err.message);
+            return res.status(500).json({ error: "Database query failed" });
+        }
+        console.log("Query successful, sending data:", data);
+        return res.json(data);
+    });
+}); 
+
+// Route to get an employee by ID ...
+router.get("/employee/:EmployeeID", (req, res) => {
+    const sql = "SELECT * FROM employee WHERE EmployeeID = ?";
+    const EmployeeID = req.params.EmployeeID;
+
+    con.query(sql, [EmployeeID], (err, data) => {
+        if (err) {
+            console.error("Error fetching employee:", err.message);
+            return res.status(500).json({ error: "Database query failed" });
+        }
+        if (data.length === 0) {
+            return res.status(404).json({ message: "Employee not found" });
+        }
+        return res.json(data[0]);  // Return a single employee object
+    });
+});
+
+// Route to register a new employee ...
+router.post("/register", (req, res) => {
+    const sql = "INSERT INTO employee (`Name`, `Address`, `ContactNumber`, `Designation`, `Workstartdate`, `Email`, `Username`, `Password`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    const values = [
+        req.body.Name,
+        req.body.Address,
+        req.body.ContactNumber,
+        req.body.Designation,
+        req.body.Workstartdate,
+        req.body.Email,
+        req.body.Username,
+        req.body.Password
+    ];
+
+    con.query(sql, values, (err, data) => {
+        if (err) {
+            console.error("Error inserting data:", err.message);
+            return res.status(500).json({ error: "Error inserting data into database", details: err.message });
+        }
+        return res.status(201).json({ message: "Employee added successfully", data });
+    });
+}); 
+
+// Route to update an existing employee ...
+router.put("/update/:EmployeeID", (req, res) => {
+    const sql = "UPDATE employee SET `Name` = ?, `Address` = ?, `ContactNumber` = ?, `Designation` = ?, `Workstartdate` = ?, `Email` = ?, `Username` = ?, `Password` = ? WHERE `EmployeeID` = ?";
+    const values = [
+        req.body.Name,
+        req.body.Address,
+        req.body.ContactNumber,
+        req.body.Designation,
+        req.body.Workstartdate,
+        req.body.Email,
+        req.body.Username,
+        req.body.Password
+    ];
+
+    const EmployeeID = req.params.EmployeeID;
+
+    con.query(sql, [...values, EmployeeID], (err, data) => {
+        if (err) {
+            console.error("Error updating data:", err.message);
+            return res.status(500).json({ error: "Error updating data", details: err.message });
+        }
+        return res.status(200).json({ message: "Employee updated successfully", data });
+    });
+});
+
+// Route to delete an employee ...
+router.delete("/employee/:EmployeeID", (req, res) => {
+    const sql = "DELETE FROM employee WHERE EmployeeID = ?";
+    const EmployeeID = req.params.EmployeeID;
+
+    con.query(sql, [EmployeeID], (err, result) => {
+        if (err) {
+            console.error("Error deleting employee:", err.message);
+            return res.status(500).json({
+                error: "Error deleting employee from database",
+                details: err.message
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Employee not found" });
+        }
+
+        return res.status(200).json({ message: "Employee deleted successfully" });
+    });
 });
 
 export default router;
