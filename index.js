@@ -8,7 +8,7 @@ import EmailRoute from './Routes/EmailRoute.js';
 const app =  express(); 
 
 app.use(express.json());
-// Enable CORS for all routes
+// Enable CORS for all routes ...
 // app.use(cors());
 app.use(cors(
     {
@@ -18,6 +18,7 @@ app.use(cors(
         allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Authorization']
     }
 ));
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -26,6 +27,6 @@ app.use('/api/employees', EmployeeRoutes);
 app.use('/api/admin', AdminRoutes);
 app.use('/api/emailService', EmailRoute);
 
-app.listen(5000,() => {
+app.listen(5000, () => {
     console.log("Connected to backend!")
 });

@@ -1,5 +1,6 @@
 import express from "express";
 import PDFDocument from 'pdfkit';
+import bcrypt from 'bcrypt';
 import con from "../utils/db.js";
 import { formatDateToDMY } from "../utils/formatDate.js";
 import fs from 'fs';
@@ -228,16 +229,19 @@ router.get("/employee/:EmployeeID", (req, res) => {
 
 // Route to register a new employee ...
 router.post("/register", (req, res) => {
-    const sql = "INSERT INTO employee (`Name`, `Address`, `ContactNumber`, `Designation`, `Workstartdate`, `Email`, `Username`, `Password`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    // Hasing the entered password ... 
+    const hashedPassword = bcrypt.hashSync(req.body.Password, 10);
+    console.log(hashedPassword);
+    const sql = "INSERT INTO employee (Name, Address, ContactNumber, Designation, WorkStartDate, Email, Password) VALUES (?, ?, ?, ?, ?, ?, ?)";
     const values = [
         req.body.Name,
         req.body.Address,
         req.body.ContactNumber,
         req.body.Designation,
-        req.body.Workstartdate,
+        req.body.WorkStartDate,
         req.body.Email,
-        req.body.Username,
-        req.body.Password
+        // req.body.Username,
+        hashedPassword
     ];
 
     con.query(sql, values, (err, data) => {
@@ -251,7 +255,11 @@ router.post("/register", (req, res) => {
 
 // Route to update an existing employee ...
 router.put("/update/:EmployeeID", (req, res) => {
-    const sql = "UPDATE employee SET `Name` = ?, `Address` = ?, `ContactNumber` = ?, `Designation` = ?, `Workstartdate` = ?, `Email` = ?, `Username` = ?, `Password` = ? WHERE `EmployeeID` = ?";
+    console.log(req.body);
+    // Hasing the entered password ... 
+    const hashedPassword = bcrypt.hashSync(req.body.Password, 10);
+    console.log(hashedPassword);
+    const sql = "UPDATE employee SET Name = ?, Address = ?, ContactNumber = ?, Designation = ?, Workstartdate = ?, Email = ?, Password = ? WHERE EmployeeID = ?";
     const values = [
         req.body.Name,
         req.body.Address,
@@ -259,8 +267,8 @@ router.put("/update/:EmployeeID", (req, res) => {
         req.body.Designation,
         req.body.Workstartdate,
         req.body.Email,
-        req.body.Username,
-        req.body.Password
+        // req.body.Username,
+        hashedPassword
     ];
 
     const EmployeeID = req.params.EmployeeID;
