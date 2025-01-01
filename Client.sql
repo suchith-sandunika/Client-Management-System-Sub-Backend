@@ -8,8 +8,9 @@ CREATE TABLE Employee (
     Address TEXT,
     Designation VARCHAR(50),
     Email VARCHAR(100) UNIQUE NOT NULL,
+    Username VARCHAR(100), 
     Password VARCHAR(255) NOT NULL,
-    WorkStartDate DATE
+    WorkStartDate DATETIME
 );
 CREATE TABLE Attendance (
     AttendanceID INT AUTO_INCREMENT PRIMARY KEY,
